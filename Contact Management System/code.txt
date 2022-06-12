@@ -1,0 +1,220 @@
+#Jihan Alshafi  - Fatima Shrateh 
+#Executes the script using the Bash shell
+#!/bin/bash
+
+# THE MAIN FUNCTION THAT PERFORM THE PROGRAM
+#PROGRAM CODE START AT LINE
+start_Program(){                                        #The main function that print the menu and implement its cases
+
+echo "**Enter the choice:**"                         # User Must enter the number of the choice from menu
+
+#printing the whole menu using switch case
+# identify the options of the menu
+
+options=("Add a new contact" "List all contacts" "Search for contacts" "Edit a contact" "Delete a contact" "Exit")
+
+select opt in "${options[@]}"
+do
+    case $opt
+    in
+    # ------------------------Add a new contact -----------add first name & check validation--------------------------------------------
+
+        "Add a new contact")                                      #----The first choice of the menu----
+        read -p "The first name:*" Fname_temp                     #----store user input in Fname_temp VARIABLE until checking validation----
+         until   grep '[A-Za-z]' > /dev/null <<< "$Fname_temp"    #----The user is forced to enter the First Name  + must be characters----
+                                                                  #the value will store in Fname_temp until program check the use has entered
+do
+       echo "You have to enter a first name"
+              read -p "Enter the first name:" Fname_temp          #---- ask user to enter again if he didn't ----
+
+
+done
+               Fname=$Fname_temp                                  #if user entered then store temp value in Fname which will print in txt file
+
+ # ------------------------Add a new contact -----------add Last name -----------------------------------------------------------------
+ 
+     read -p "The last name:" Lname                  #----Ask user to enter the Last name , but it's an optional choice----
+
+ # ------------------------Add a new contact -----------add PHONE NUMBER & check validation--------------------------------------------
+
+     read -p "The phone number can be landline or Mobilephone -must start with 05/09/02 and be 9 OR 10 digits-:*" phone_temp
+
+#----Check the validation , must start with 05 and consist of 9 or 10 digits to accept it----
+
+        until   grep '^05[0-9]\{7\}' > /dev/null <<< "$phone_temp" || grep '^09[0-9]\{7\}' > /dev/null <<< "$phone_temp" || grep '^02[0-9]\{7\}' > /dev/null <<< "$phone_temp" &&  [ $phone_temp  -le 999999999  ]
+
+do
+  # if the phone number is not valid(less than 9 digits or doesn't start with 05 or 09 or 02) OR user didn't enter a number then ask him AGAIN!
+
+       echo "The phone number is NOT VALID , enter a number consists of 9 or 10 numbers start with 05 or 09 or 02"
+              read -p "The phone number:" phone_temp        #----store the value in phone_temp until check it's valid----
+done
+               phone=$phone_temp                           # it's valid , store temp value in phone variable
+
+ # ------------------------Add a new contact -----------add email & check validation--------------------------------------------
+ 
+        read -p "The email:*" email_temp                    #---- ask user to enter his email----
+         until   grep '@' > /dev/null <<< "$email_temp"     #-----Check if it's valid (if there is an @ or not)------
+do
+       echo "The email is not valid"                        #---- if it's not valid or he didn't enter an email , Ask him AGAIN! ----
+              read -p "The email:" email_temp               #----store the value in email_temp until check it's valid----
+done
+               email=$email_temp                            # ----- it's valid so store the temp value in email value -----
+
+ # ------------------------Add a new contact -----------Write the data into the txt file --------------------------------------------
+
+#----Write all the inputs of new contact from user into the txt file he entered (which is stored in resposnse VARIABLE)----
+
+    printf "%s, " $Fname >> "$response"                    #----response is the variable that has the txt file name----
+    printf "%s, " $Lname >> "$response"                    #---- print statments to write the values of the variables into txt file-----
+    printf "%s, " $phone >> "$response"
+    printf "%s "  $email >> "$response"
+    printf "\n" >> "$response"
+
+ echo "------------------------------------"               #---- echo dashes to seprate between lines -----
+start_Program                                              #----Call start_Program function to print the menu again ----
+            ;;
+ # ------------------------------------------List all contacts ------------------------------------------------------------------
+
+#----- the program will let the user list the contacts based on the first name or on the last name---------
+        "List all contacts")                             #second option of the switch case
+           read -p "List by first name or last name? [F/L]:" option      #-----User should enter F for first name or L for last name
+           if test $option = "F"
+           then
+            awk '{print $1}' Contact.txt                #---- print the first column (First name) of the text file -----
+            elif test $option = "L"
+            then
+            awk '{print $2}' Contact.txt                #---- print the second column (last name) of the text file -----
+            elif test $option = *
+            then
+            echo "Wrong input"                          #----if user enter neither F nor L , print it's wrong input
+            fi
+            echo "------------------------------------"
+start_Program                                            #----Call start_Program function to print the menu again ----
+            ;;
+
+ # --------------------------------------- Search for contacts --------------------------------------------
+
+ #the user can search using any field (e.g. aziz) or part of field (e.g. birzeit.edu) or combination of field
+        "Search for contacts")                          # the third option of the switch case
+
+           read -p "Enter Fname/Lname/phone/email you want to find:" searchWord
+           grep $searchWord $response            #_________________________WARNING_________________________________
+
+           echo "------------------------------------"
+           start_Program                         #----Call start_Program function to print the menu again ----
+           ;;
+
+ # ---------------------------------------------Edit a contact of any field--------------------------------------------
+        "Edit a contact")                        #  the fourth option of the switch case
+        read -p "Enter the field you want to edit by entering the captial char from brackets[F/L/P/E]:" field
+        if test $field = "F"                     # if the field wanted to be edit is first name
+           then
+         read -p "Enter the First name you want to change  :" editF       #----ask user to enter the first name to be edited----
+       read -p "Enter the new first name you want :" newF                 #----ask user to enter the new name of that name-----
+
+          if grep $editF $response ;                     #search if the first name is exist , if yes dispaly all the names that have that name
+            then
+            #----ask user to enter the last name of the first name from the given names *espacially for the duplicate names case--
+            read -p "Enter the Last name of that first name:" Lname
+            sed -i "s/$editF\, $Lname/$newF\, $Lname/" $response     #----replace the old first name by the new first name----
+            else
+             echo "The first name you are searching for is not exist"     #---- if the name isn't exist----
+            fi
+ # --------------------------------- if the field wanted to be edit is Last name--------------------------------
+            elif test $field = "L"
+            then
+            read -p "Enter the last name you want to change :" editL      #----ask user to enter the last name to be edited----
+            read -p "Enter the new last name you want :" newL             #----ask user to enter the new name of that name-----
+
+          if grep $editL $response ;                     #search if the first name is exist , if yes dispaly all the names that have that name
+            then
+            #----ask user to enter the last name of the first name from the given names *espacially for the duplicate names case----
+            read -p "Enter the first name of the last name you wnat to edit  :" Fname
+            sed -i "s/$Fname\, $editL/$Fname\, $newL/" $response           #----replace the old last name by the new last name----
+            else
+            echo "The Last name you are searching for is not exist"     #---- if the name isn't exist----
+            fi
+ # --------------------------------- if the field wanted to be edit is phone --------------------------------
+
+            elif test $field = "P"
+            then
+            read -p "Enter the number phone you want to change :" editP    #----ask user to enter the phone number to be edited----
+            read -p "Enter the new number phone you want :" newP           #----ask user to enter the new phone number -----
+
+          if grep $editP $response;               #search if the phone number is exist , if yes dispaly the information of this contact
+            then
+            read -p "Please enter the last name of the phone number OWNER:" Last
+            sed -i "s/$Last\, $editP/$Last\, $newP/" $response             #----replace the old phone by the new one ----
+            else
+           echo "The phone number you are searching for is not exist"     #---- if the name isn't exist----
+            fi
+ # --------------------------------- if the field wanted to be edit is email --------------------------------
+
+            elif test $field = "E"
+            then
+            read -p "Enter the email you want to change  :" editE          #----ask user to enter the email to be edited----
+            read -p "Enter the new email you want :" newE                  #----ask user to enter the new email -----
+
+          if grep $editE $response ;            #search if the email is exist , if yes dispaly the information of this contact
+            then
+            read -p "Please enter the phone number of the email OWNER :" phone
+            sed -i "s/$phone\, $editE/$phone\, $newE/" $response            #----replace the old email by the new one ----
+            else
+            echo "The phone number you are searching for is not exist"     #---- if the name isn't exist----
+            fi
+
+          elif test $field = *              # if the user enter an input not between the allowed options print Wrong input
+            then
+            echo "Wrong input"
+            fi
+
+            echo "------------------------------------"
+           start_Program                                               #----Call start_Program function to print the menu again ----
+           ;;
+ # ---------------------------------------Delete a contact -----------------------------------------------------------------
+
+
+        "Delete a contact")
+        read -p "Enter any information of the contact you want to delete :" delete   #----ask user to enter any field to be deleted ----
+
+        if grep $delete $response ;                 # search if the contact is exist
+            then
+            #delete all the line that has that conatct
+            grep -v "$delete" Contact.txt > temp && mv temp Contact.txt
+            else
+            echo "The contact you are trying to delete  is not exist"     #---- if the name isn't exist---
+            fi
+        #the number of words in file wc.txt  --> wc -w wc.txt
+
+echo "------------------------------------"
+start_Program                                               #----Call start_Program function to print the menu again ----
+            ;;
+        "Exit")                                  #-----Exit choice to exit the program-----
+            break
+            ;;
+        *) echo "invalid option $REPLY";;        #------if user enter a choice number not between [1-6]-----
+
+                 # ---------------------this is the end of switch case----------------
+  esac
+
+done
+}
+
+
+#Program START HERE
+echo "*** Welcome to contact mangement System ***"           #print Welcome screen in the begining
+echo "                MAIN MENU                "
+echo "       ===========================       "
+#--------------------Check if the file is exist
+read -p "What is the file contact name? :" response
+until  [ -e $response ]                   #---check if the file exist----
+do
+echo "File doesn't exist"                 #--- if the file is not exist ask user Again! ---
+read -p "What is the file contact name? :" response
+done
+start_Program                                # --- if the file exist call start_Program function to start the menu
+###########
+
+
+
